@@ -1,13 +1,13 @@
-import persistent
+from persistent import Persistent
 
-class Jogo(persistent.Persistent):
+class Jogo(Persistent):
   
-
-  def __init__(self, id, titulo, descricao, ano, categoria, duracao, preco):
-        self.id = id
-        self.titulo = titulo
-        self.descricao = descricao
-        self.ano = ano
-        self.categoria = categoria
-        self.duracao = duracao
-        self.preco = preco
+  def __init__(self, id: int, titulo: str, descricao: str, ano: int, categoria: str, duracao: int, preco: float):
+    self.id = id
+    self.titulo = titulo
+    self.descricao = descricao
+    self.ano = ano
+    self.categoria = categoria
+    self.duracao = duracao
+    self.preco = preco
+      
