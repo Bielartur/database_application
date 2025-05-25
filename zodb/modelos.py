@@ -11,3 +11,9 @@ class Jogo(Persistent):
     self.duracao = duracao
     self.preco = preco
       
+class Usuario(Persistent):
+  def __init__(self, id: int, nome: str, email: str, senha: str):
+    self.id = id
+    self.nome = nome
+    self.email = email
+    self.senha = senha
