@@ -1,9 +1,11 @@
-from zodb import JogoDB
-from zodb_models.jogo import Jogo
+from zodb.db import JogoDB
+from zodb.modelos import Jogo, Usuario
 from mongo.connect import get_mongo_db
 from mongo.comentario import novo_comentario
+from validate_email_address import validate_email
 
 from time import sleep
+from typing import Literal
 
 # === Setup ZODB ===
 zodb = JogoDB()
@@ -54,14 +56,23 @@ def criar_jogo():
     if add_comentario == 's':
         criar_comentario(id)
 
-def criar_comentario(jogo_id=None):
+def criar_comentario(jogo_id: int | None, usuario: Usuario | None):
+    if not usuario:
+        print('Para fazer um comentário, antes faça login.')
+        opcao = input('Aperte ENTER para fazer login')
+        print('Ou')
+        print('Digite 0 para voltar')
+        if opcao == '0':
+            return
+        usuario = fazer_login()
+
+    print(f'Faça aqui seu comentário {usuario.nome}')
     if jogo_id is None:
         jogo_id = int(input("ID do jogo: "))
-    cliente_id = input("ID do cliente: ")
     comentario_texto = input("Comentário: ")
     avaliacao = float(input("Avaliação (0-5): "))
 
-    comentario = novo_comentario(jogo_id, cliente_id, comentario_texto, avaliacao)
+    comentario = novo_comentario(jogo_id, usuario.id, comentario_texto, avaliacao)
     comentarios.insert_one(comentario)
     print("✅ Comentário adicionado.")
 
@@ -146,7 +157,6 @@ def infos_para_atualizar(jogo: Jogo):
         # Aqui você pode retornar os novos valores ou atualizar diretamente o objeto
         return valores
 
-
 def remover_jogo():
     id = int(input("ID do jogo: "))
     jogo = zodb.excluir_jogo(id)
@@ -154,6 +164,50 @@ def remover_jogo():
         print("🗑 Jogo removido com sucesso.")
     else:
         print("❌ Jogo não encontrado.")
+
+def identificar_novo_id(tipo: Literal['Jogo', 'Usuário']) -> int:
+    listas = {
+        'Usuário': zodb.listar_usuarios(),
+        'Livro': zodb.listar_jogos(),
+    }
+    ultimo_id = listas[tipo][-1].id if listas[tipo] else 0
+    return ultimo_id + 1
+
+def cadastrar_usuario():
+    print('Cadastro de usuário:\n')
+
+    id = identificar_novo_id('Usuário')
+    nome = str(input('Nome: ')).strip().capitalize()
+
+    email = ''
+    while not validate_email(email):
+        email = str(input('Email: '))
+        if not validate_email(email):
+            print('❌ Email invállido, tente novamente.')
+
+    senha = str(input('Senha: '))
+    
+    usuario = Usuario(id, nome, email, senha)
+    zodb.criar_usuario(usuario)
+    print('✅ Usuario cadastrado com sucesso.')
+
+def fazer_login():
+    print('Ainda não tem login? Então digite 0:\n')
+    email = str(input('Email: '))
+    if email == '0':
+        cadastrar_usuario()
+        return
+    
+    usuario = zodb.buscar_usuario_email(email)
+    if not usuario:
+        print(f'❌ Usuario com email {email} não existe.')
+
+    senha = str(input('Senha: '))
+    if usuario.senha == senha:
+        print('✅ Login efetuado com sucesso.')
+        sleep(1)
+    else:
+        print('❌ Senha incorreta.')
 
 # === Menu Principal ===
 def menu():
