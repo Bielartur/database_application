@@ -7,13 +7,12 @@ from validate_email_address import validate_email
 from time import sleep
 from typing import Literal
 
-# === Setup ZODB ===
-zodb = JogoDB()
-# === Setup MongoDB ===
-db_mongo = get_mongo_db()
-comentarios = db_mongo["comentarios"]
+# === Setup dos bancos ===
+zodb = JogoDB()  # Instancia o banco ZODB para jogos e usuários
+db_mongo = get_mongo_db()  # Instancia o banco MongoDB para comentários
+comentarios = db_mongo["comentarios"]  # Coleção de comentários
 
-# === Cores ===
+# === Funções de cores para terminal ===
 def amarelo(texto: str) -> str:
     return f'\033[33m{texto}\033[0m'
 
@@ -35,8 +34,10 @@ def roxo(texto: str) -> str:
 def laranja(texto: str) -> str:
     return f'\033[33m{texto}\033[0m'
 
-# === Funções ===
+# === CRUD de Jogos e Comentários ===
+
 def criar_jogo():
+    """Cria um novo jogo no ZODB e permite adicionar comentário."""
     id = int(input("ID: "))
     if zodb.buscar_jogo(id):
         print("⚠ Jogo com esse ID já existe.")
@@ -57,6 +58,7 @@ def criar_jogo():
         criar_comentario(id)
 
 def criar_comentario(jogo_id: int | None, usuario: Usuario | None):
+    """Adiciona um comentário a um jogo, exige login do usuário."""
     if not usuario:
         print('Para fazer um comentário, antes faça login.')
         opcao = input('Aperte ENTER para fazer login')
@@ -77,6 +79,7 @@ def criar_comentario(jogo_id: int | None, usuario: Usuario | None):
     print("✅ Comentário adicionado.")
 
 def listar_jogos():
+    """Lista todos os jogos cadastrados no ZODB."""
     jogos = zodb.listar_jogos()
     for jogo in jogos:
         print(f"\n🎮 {jogo.id} - {ciano(jogo.titulo)}")
@@ -88,6 +91,7 @@ def listar_jogos():
     sleep(1)
 
 def buscar_jogo():
+    """Busca e exibe um jogo pelo ID, mostrando também comentários."""
     id = int(input("Digite o ID do jogo: "))
     jogo = zodb.buscar_jogo(id)
     if jogo:
@@ -104,6 +108,7 @@ def buscar_jogo():
         print("❌ Jogo não encontrado.")
 
 def atualizar_info():
+    """Atualiza informações de um jogo existente."""
     id = int(input("ID do jogo: "))
     jogo = zodb.buscar_jogo(id)
     if jogo:
@@ -115,6 +120,7 @@ def atualizar_info():
         print("❌ Jogo não encontrado.")
 
 def infos_para_atualizar(jogo: Jogo):
+    """Auxilia na atualização de campos de um jogo."""
     opcoes = {
         '1': (ciano('Título'), 'titulo'),
         '2': (roxo('Descrição'), 'descricao'),
@@ -144,20 +150,18 @@ def infos_para_atualizar(jogo: Jogo):
                 novo_valor = input(f'Novo(a) {nome}: ')
                 if atributo == 'preco':
                     novo_valor = float(novo_valor)
-
                 if atributo == 'ano':
                     novo_valor = int(novo_valor)
-
                 if atributo == 'duracao':
                     novo_valor = int(novo_valor)
                 valores[atributo] = novo_valor
             else:
                 valores[atributo] = getattr(jogo, atributo)
 
-        # Aqui você pode retornar os novos valores ou atualizar diretamente o objeto
         return valores
 
 def remover_jogo():
+    """Remove um jogo do ZODB pelo ID."""
     id = int(input("ID do jogo: "))
     jogo = zodb.excluir_jogo(id)
     if jogo:
@@ -166,6 +170,7 @@ def remover_jogo():
         print("❌ Jogo não encontrado.")
 
 def identificar_novo_id(tipo: Literal['Jogo', 'Usuário']) -> int:
+    """Gera um novo ID incremental para jogos ou usuários."""
     listas = {
         'Usuário': zodb.listar_usuarios(),
         'Livro': zodb.listar_jogos(),
@@ -174,6 +179,7 @@ def identificar_novo_id(tipo: Literal['Jogo', 'Usuário']) -> int:
     return ultimo_id + 1
 
 def cadastrar_usuario():
+    """Cadastra um novo usuário no sistema."""
     print('Cadastro de usuário:\n')
 
     id = identificar_novo_id('Usuário')
@@ -192,6 +198,7 @@ def cadastrar_usuario():
     print('✅ Usuario cadastrado com sucesso.')
 
 def fazer_login():
+    """Realiza login do usuário, ou permite cadastro."""
     print('Ainda não tem login? Então digite 0:\n')
     email = str(input('Email: '))
     if email == '0':
@@ -211,6 +218,7 @@ def fazer_login():
 
 # === Menu Principal ===
 def menu():
+    """Exibe o menu principal e executa as ações escolhidas pelo usuário."""
     try:
         while True:
             print("\n=== MENU ===")
@@ -240,6 +248,19 @@ def menu():
             else:
                 print("❌ Opção inválida.")
     finally:
-        zodb.fechar()
+        zodb.fechar()  # Fecha a conexão com o ZODB ao sair do menu
 
-menu()
+def main():
+    """Executa o menu principal e, ao final, roda o ETL para atualizar o Data Warehouse."""
+    menu()
+    # Ao final do menu, rode o ETL automaticamente
+    try:
+        from etl.etl_dw import main as etl_main
+        print("\nIniciando ETL para atualizar o Data Warehouse...")
+        etl_main()
+        print("ETL finalizado com sucesso.")
+    except Exception as e:
+        print(f"Erro ao executar o ETL automaticamente: {e}")
+
+if __name__ == "__main__":
+    main()

@@ -1,8 +1,7 @@
 from ZODB import FileStorage, DB
 from BTrees.OOBTree import OOBTree
 import transaction
-from zodb_models.jogo import Jogo
-from zodb_models.usuario import Usuario
+from zodb.modelos import Jogo, Usuario  # Corrigido para o caminho correto
 
 
 class BaseDB():
@@ -12,7 +11,14 @@ class BaseDB():
         self.connection = self.db.open()
         self.root = self.connection.root()
 
+        # Inicializa as "tabelas" se não existirem
+        if not hasattr(self.root, 'jogos'):
+            self.root.jogos = OOBTree()
+        if not hasattr(self.root, 'usuarios'):
+            self.root.usuarios = OOBTree()
+
     def fechar(self):
+        transaction.abort()  # Garante que nenhuma transação fique aberta
         self.connection.close()
         self.db.close()
         self.storage.close()
@@ -21,10 +27,6 @@ class BaseDB():
 class JogoDB(BaseDB):
     def __init__(self):        
         super().__init__()
-
-        # Inicializa as "tabelas" se não existirem
-        if not hasattr(self.root, 'jogos'):
-            self.root.jogos = OOBTree()
 
     # Métodos para jogo
     def criar_jogo(self, jogo: Jogo):
@@ -50,14 +52,14 @@ class JogoDB(BaseDB):
 
     # Métodos para Usuário
     def criar_usuario(self, usuario: Usuario):
-        self.root.usuario[usuario.id] = usuario
+        self.root.usuarios[usuario.id] = usuario  # Corrigido: era self.root.usuario
         transaction.commit()
 
     def buscar_usuario_id(self, id) -> Usuario:
         return self.root.usuarios.get(id)
     
     def buscar_usuario_email(self, email) -> Usuario:
-        for usuario in self.root.usuarios.values():  # Percorre todos os usuários
+        for usuario in self.root.usuarios.values():
             if usuario.email == email:
                 return usuario
     
@@ -69,20 +71,10 @@ class JogoDB(BaseDB):
         transaction.commit()
 
     def excluir_usuario(self, id: int) -> Usuario:
-        usuario = self.buscar_usuario(id)
+        usuario = self.buscar_usuario_id(id)  # Corrigido: era self.buscar_usuario
         if usuario:
             del self.root.usuarios[usuario.id]
             transaction.commit()
             return usuario
 
-     
-# class UsuarioDB(BaseDB):
-#     def __init__(self):
-#         super().__init__()
 
-#         # Inicializa as "tabelas" se não existirem
-#         if not hasattr(self.root, 'usuarios'):
-#             self.root.usuarios = OOBTree()
-
-
-    
