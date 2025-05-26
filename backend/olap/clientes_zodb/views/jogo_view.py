@@ -5,6 +5,7 @@ from rest_framework import status
 from clientes_zodb.services.zodb_service import JogoDB
 from clientes_zodb.models.zodb_models import Jogo
 from clientes_zodb.utils.indentificar_id import identificar_novo_id
+from etl.etl_dw import main as etl_main  # Adicionado import do ETL
 
 
 class JogoListCreate(APIView):
@@ -52,7 +53,6 @@ class JogoListCreate(APIView):
         finally:
             db.fechar()
 
-
     def post(self, request):
         db = JogoDB()
         novo_id = identificar_novo_id('Jogo', db)
@@ -69,6 +69,11 @@ class JogoListCreate(APIView):
         )
         db.criar_jogo(jogo)
         db.fechar()
+        # Executa o ETL após criar o jogo
+        try:
+            etl_main()
+        except Exception as e:
+            print(f"Erro ao rodar ETL: {e}")
         return Response({"mensagem": "Jogo criado", "id": novo_id,"dados": dados}, status=status.HTTP_201_CREATED)
     
     def put(self, request, jogo_id):
@@ -91,6 +96,12 @@ class JogoListCreate(APIView):
 
         db.atualizar_jogo(jogo)  # você pode usar commit aqui também
         db.fechar()
+        # Executa o ETL após atualizar o jogo
+        try:
+            etl_main()
+        except Exception as e:
+            print(f"Erro ao rodar ETL: {e}")
+        return Response({"mensagem": "Jogo atualizado"}, status=200)
     
     def delete(self, request, jogo_id):
         db = JogoDB()
@@ -106,5 +117,10 @@ class JogoListCreate(APIView):
                 "preco": jogo.preco
         }
         if jogo is None:
-            return Response({"erro": "Jogo não encontrado"}, status=status.HTTP_404_NOT_FOUND)
-        return Response({"mensagem": "Jogo deletado", "dados": dados}, status=status.HTTP_204_NO_CONTENT)
+            return Response({"erro": "Jogo não encontrado"}, status=404)
+        # Executa o ETL após deletar o jogo
+        try:
+            etl_main()
+        except Exception as e:
+            print(f"Erro ao rodar ETL: {e}")
+        return Response({"mensagem": "Jogo deletado", "dados": dados}, status=204)
