@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from pymongo import MongoClient
 from decouple import config
+from datetime import timedelta
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -40,13 +41,22 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'clientes_zodb',
-    'corsheaders',
+
+    # Rest Framework
+    "rest_framework",
+
+    # Cors headers
+    "corsheaders",
+
+    # Apps
     'etl',
-    'accounts'
+    'accounts',
+    'clientes_zodb',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -54,7 +64,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -147,3 +156,20 @@ MONGO_URI = "mongodb://localhost:27017"  # ou seu cluster Atlas
 MONGO_DB = "jogoteca"  # nome do banco
 
 CORS_ALLOW_ALL_ORIGINS = True  # Para desenvolvimento (não recomendado em produção)
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),   # token de acesso dura 30 minutos
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),      # token de refresh dura 7 dias
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}

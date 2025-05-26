@@ -1,11 +1,14 @@
-from accounts.views.base import Base
 from accounts.auth import Authentication
 from accounts.serializers import UserSerializer
 
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 
-class SignIn(Base):
+class SignIn(APIView):
+    permission_classes = [AllowAny] 
+
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
@@ -14,13 +17,10 @@ class SignIn(Base):
 
         token = RefreshToken.for_user(user)
 
-        enterprise = self.get_enterprise_user(user.id)
-
         serializer = UserSerializer(user)
 
         return Response({
             "user": serializer.data,
-            "enterprise": enterprise,
             "refresh": str(token),
             "access": str(token.access_token)
         })

@@ -4,8 +4,6 @@ from django.contrib.auth.hashers import check_password, make_password
 
 from accounts.models import User
 
-from companies.models import Enterprise, Employee
-
 
 class Authentication:
     def signin(self, email=None, password=None) -> User:
@@ -23,7 +21,7 @@ class Authentication:
         
         return user
     
-    def signup(self, name, email, password, type_account='owner', company_id=False):
+    def signup(self, name, email, password):
         if not name or name == '':
             raise APIException('O nome não deve ser null')
         
@@ -43,7 +41,6 @@ class Authentication:
             name=name,
             email=email,
             password=password_hashed,
-            is_owner=0 if type_account == 'employee' else 1
         )
 
         return created_user
