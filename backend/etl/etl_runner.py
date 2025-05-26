@@ -9,7 +9,7 @@ import random
 import logging
 from contextlib import contextmanager
 
-from zodb.db import JogoDB
+from clientes_zodb.services.zodb_service import JogoDB
 
 # Configuração básica do logging
 logging.basicConfig(

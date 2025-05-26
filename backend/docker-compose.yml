@@ -1,0 +1,39 @@
+version: '3.12'
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: varejo_db
+      POSTGRES_USER: varejo_dev
+      POSTGRES_PASSWORD: varejo_dev
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      - DB_HOST=db
+      - DB_NAME=varejo_db
+      - DB_USER=varejo_dev
+      - DB_PASS=varejo_dev
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    command: npm run dev
+
+volumes:
+  pgdata:

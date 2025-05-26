@@ -172,3 +172,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Não relevante para o projeto, usado apenas como consulta
+backend/main.py
+
+# ZODB
+backend/zodb/

@@ -2,16 +2,15 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from clientes_zodb.services.zodb_service import JogoDB
+from clientes_zodb.services.zodb_service import JogoDB, get_jogo_db
 from clientes_zodb.models.zodb_models import Jogo
 from clientes_zodb.utils.indentificar_id import identificar_novo_id
-from etl.etl_dw import main as etl_main  # Adicionado import do ETL
+from etl.etl_runner import main as etl_main  # Adicionado import do ETL
 
 
 class JogoListCreate(APIView):
     def get(self, request, jogo_id=None):
-        db = JogoDB()
-        try:
+        with get_jogo_db() as db:
             if jogo_id is not None:
                 jogo = db.buscar_jogo_id(jogo_id)
                 if not jogo:
@@ -50,11 +49,8 @@ class JogoListCreate(APIView):
                     status=status.HTTP_200_OK
                 )
             return Response(data, status=status.HTTP_200_OK)
-        finally:
-            db.fechar()
 
-    def post(self, request):
-        db = JogoDB()
+    def post(self, request):     
         novo_id = identificar_novo_id('Jogo', db)
         dados = request.data
         jogo = Jogo(
@@ -67,8 +63,8 @@ class JogoListCreate(APIView):
             preco=dados['preco'],
             url_imagem=dados['url_imagem']
         )
-        db.criar_jogo(jogo)
-        db.fechar()
+        with get_jogo_db() as db:
+            db.criar_jogo(jogo)
         # Executa o ETL após criar o jogo
         try:
             etl_main()
@@ -78,24 +74,23 @@ class JogoListCreate(APIView):
     
     def put(self, request, jogo_id):
         dados = request.data
-        db = JogoDB()
-        jogo = db.buscar_jogo_id(jogo_id)
+        with get_jogo_db() as db:
+            jogo = db.buscar_jogo_id(jogo_id)
 
-        if jogo is None:
-            db.fechar()
-            return Response({"erro": "Jogo não encontrado"}, status=404)
+            if jogo is None:
+                return Response({"erro": "Jogo não encontrado"}, status=404)
 
-        # Atualiza os atributos
-        jogo.titulo = dados.get('titulo', jogo.titulo)
-        jogo.descricao = dados.get('descricao', jogo.descricao)
-        jogo.ano = dados.get('ano', jogo.ano)
-        jogo.categoria = dados.get('categoria', jogo.categoria)
-        jogo.duracao = dados.get('duracao', jogo.duracao)
-        jogo.preco = dados.get('preco', jogo.preco)
-        jogo.url_imagem = dados.get('url_imagem', jogo.url_imagem)
+            # Atualiza os atributos
+            jogo.titulo = dados.get('titulo', jogo.titulo)
+            jogo.descricao = dados.get('descricao', jogo.descricao)
+            jogo.ano = dados.get('ano', jogo.ano)
+            jogo.categoria = dados.get('categoria', jogo.categoria)
+            jogo.duracao = dados.get('duracao', jogo.duracao)
+            jogo.preco = dados.get('preco', jogo.preco)
+            jogo.url_imagem = dados.get('url_imagem', jogo.url_imagem)
 
-        db.atualizar_jogo(jogo)  # você pode usar commit aqui também
-        db.fechar()
+            db.atualizar_jogo(jogo)  # você pode usar commit aqui também
+
         # Executa o ETL após atualizar o jogo
         try:
             etl_main()
@@ -104,9 +99,8 @@ class JogoListCreate(APIView):
         return Response({"mensagem": "Jogo atualizado"}, status=200)
     
     def delete(self, request, jogo_id):
-        db = JogoDB()
-        jogo = db.excluir_jogo(jogo_id)
-        db.fechar()
+        with get_jogo_db() as db:
+            jogo = db.excluir_jogo(jogo_id)
         dados = {
                 "id": jogo.id,
                 "titulo": jogo.titulo,
