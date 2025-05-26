@@ -41,7 +41,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     'clientes_zodb',
-    'etl'
+    'corsheaders',
+    'etl',
+    'accounts'
 ]
 
 MIDDLEWARE = [
@@ -52,6 +54,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -142,3 +145,5 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MONGO_URI = "mongodb://localhost:27017"  # ou seu cluster Atlas
 MONGO_DB = "jogoteca"  # nome do banco
+
+CORS_ALLOW_ALL_ORIGINS = True  # Para desenvolvimento (não recomendado em produção)
