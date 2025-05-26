@@ -53,19 +53,19 @@ class JogoListCreate(APIView):
         return Response(data, status=status.HTTP_200_OK)
 
     def post(self, request):     
-        novo_id = identificar_novo_id('Jogo', db)
-        dados = request.data
-        jogo = Jogo(
-            id=novo_id,
-            titulo=dados['titulo'],
-            descricao=dados['descricao'],
-            ano=dados['ano'],
-            categoria=dados['categoria'],
-            duracao=dados['duracao'],
-            preco=dados['preco'],
-            url_imagem=dados['url_imagem']
-        )
         with get_jogo_db() as db:
+            novo_id = identificar_novo_id('Jogo', db)
+            dados = request.data
+            jogo = Jogo(
+                id=novo_id,
+                titulo=dados['titulo'],
+                descricao=dados['descricao'],
+                ano=dados['ano'],
+                categoria=dados['categoria'],
+                duracao=dados['duracao'],
+                preco=dados['preco'],
+                url_imagem=dados['url_imagem']
+            )
             db.criar_jogo(jogo)
             # Executa o ETL após criar o jogo
             try:

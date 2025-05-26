@@ -1,10 +1,14 @@
-from accounts.views.base import Base
 from accounts.auth import Authentication
 from accounts.serializers import UserSerializer
 
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
 
-class SignUp(Base):
+
+class SignUp(APIView):
+    permission_classes = [AllowAny] 
+
     def post(self, request):
         name = request.data.get('name')
         email = request.data.get('email')
