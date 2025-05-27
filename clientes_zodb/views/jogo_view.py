@@ -68,10 +68,10 @@ class JogoListCreate(APIView):
             )
             db.criar_jogo(jogo)
             # Executa o ETL após criar o jogo
-            try:
-                etl_main(db=db)
-            except Exception as e:
-                print(f"Erro ao rodar ETL: {e}")
+            # try:
+            #     etl_main(db=db)
+            # except Exception as e:
+            #     print(f"Erro ao rodar ETL: {e}")
             transaction.commit()
         return Response({"mensagem": "Jogo criado", "id": novo_id,"dados": dados}, status=status.HTTP_201_CREATED)
     
@@ -95,10 +95,10 @@ class JogoListCreate(APIView):
             db.atualizar_jogo(jogo)  # você pode usar commit aqui também
 
             # Executa o ETL após atualizar o jogo
-            try:
-                etl_main(db=db)
-            except Exception as e:
-                print(f"Erro ao rodar ETL: {e}")
+            # try:
+            #     etl_main(db=db)
+            # except Exception as e:
+            #     print(f"Erro ao rodar ETL: {e}")
             transaction.commit()
         return Response({"mensagem": "Jogo atualizado"}, status=200)
     
@@ -117,9 +117,9 @@ class JogoListCreate(APIView):
             if jogo is None:
                 return Response({"erro": "Jogo não encontrado"}, status=404)
             # Executa o ETL após deletar o jogo
-            try:
-                etl_main(db=db)
-            except Exception as e:
-                print(f"Erro ao rodar ETL: {e}")
+            # try:
+            #     etl_main(db=db)
+            # except Exception as e:
+            #     print(f"Erro ao rodar ETL: {e}")
             transaction.commit()
         return Response({"mensagem": "Jogo deletado", "dados": dados}, status=204)
